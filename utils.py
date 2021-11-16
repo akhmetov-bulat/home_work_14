@@ -12,12 +12,14 @@ def movie_by_title(title):
     try:
         cur.execute(sqlite_query)
     except:
-        return "not found",404
-    result = cur.fetchall()
-    movie_info = {"title": result[0][0], "country": result[0][1], "release_year": result[0][2], "genre": result[0][3],
-     "description": result[0][4]}
+        return "Internal Server Error"
+    movie = cur.fetchall()[0]
+    if not movie:
+        return []
+    movie_info = {"title": movie[0], "country": movie[1], "release_year": movie[2], "genre": movie[3],
+     "description": movie[4]}
     con.close()
-    return movie_info, 200
+    return movie_info
 
 
 def movie_by_year_range(start_year, end_year):
@@ -31,13 +33,15 @@ def movie_by_year_range(start_year, end_year):
     try:
         cur.execute(sqlite_query)
     except:
-        return "not found",404
+        return []
     result = []
     movies = cur.fetchall()
-    for i in range(len(movies)):
-        result.append({"title":movies[i][0], "release_year":movies[i][1]})
+    if not movies:
+        return []
+    for title, release_year in movies:
+        result.append({"title":title, "release_year":release_year})
     con.close()
-    return result, 200
+    return result
 
 def movie_by_rating(rating):
     con = sqlite3.connect('netflix.db')
@@ -56,13 +60,15 @@ def movie_by_rating(rating):
     try:
         cur.execute(sqlite_query)
     except:
-        return "not found",404
+        return []
     result = []
     movies = cur.fetchall()
-    for i in range(len(movies)):
-        result.append({"title":movies[i][0], "rating":movies[i][1], "description":movies[i][2]})
+    if not movies:
+        return result
+    for title, rating, description in movies:
+        result.append({"title":title, "rating":rating, "description":description})
     con.close()
-    return result, 200
+    return result
 
 
 def double_actors(actor_1, actor_2):
@@ -75,20 +81,24 @@ def double_actors(actor_1, actor_2):
                             LIMIT 100'''
     all_actors_played = []
     try:
-        for row in cur.execute(sqlite_query):
+        cur.execute(sqlite_query)
+    except:
+        return []
+    actors = cur.fetchall()
+    if not actors:
+        return []
+    for row in actors:
             new_cast = row[0].split(', ')
             new_cast.remove(actor_1)
             new_cast.remove(actor_2)
             all_actors_played = all_actors_played + new_cast
-    except:
-        return "not found",404
     actors_set = set(all_actors_played)
     result = []
     for actor in actors_set:
         if all_actors_played.count(actor) > 2:
             result.append(actor)
     con.close()
-    return result, 200
+    return result
 
 
 def movies_by_type_release_genre(type, release_year, listed_in):
@@ -104,10 +114,12 @@ def movies_by_type_release_genre(type, release_year, listed_in):
     try:
         cur.execute(sqlite_query)
     except:
-        return "not found",404
-    result = []
+        return []
     movies = cur.fetchall()
-    for i in range(len(movies)):
-        result.append({"title":movies[i][0], "description":movies[i][1]})
+    if not movies:
+        return []
+    result = []
+    for title, description in movies:
+        result.append({"title":title, "description":description})
     con.close()
-    return result, 200
+    return result
